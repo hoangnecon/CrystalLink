@@ -26,7 +26,8 @@ fn main() {
     });
 
     // Framebuffer: ARGB format (Minifb uses u32: 00RR GGBB)
-    let buffer = Arc::new(Mutex::new(vec![0u32; WIDTH * HEIGHT]));
+    // Default to Dark Blue (Waiting state) instead of Black to confirm App is running
+    let buffer = Arc::new(Mutex::new(vec![0xFF000033; WIDTH * HEIGHT]));
     let buffer_clone = buffer.clone();
 
     // UDP Listener Thread
@@ -40,15 +41,24 @@ fn main() {
         thread::spawn(move || {
             loop {
                 let msg = bincode::serialize(&Packet::Discovery { hostname: "WinReceiver".into() }).unwrap();
-                beacon_socket.send_to(&msg, "255.255.255.255:5556").ok(); // Send to Mac Port 5556
+                match beacon_socket.send_to(&msg, "255.255.255.255:5556") {
+                    Ok(_) => println!("Beacon sent to 255.255.255.255:5556..."),
+                    Err(e) => println!("Failed to send beacon: {}", e),
+                }
                 thread::sleep(Duration::from_secs(1));
             }
         });
 
         let mut buf = [0u8; MAX_UDP_PAYLOAD];
+        let mut first_packet = true;
         loop {
             match socket.recv_from(&mut buf) {
-                Ok((amt, _src)) => {
+                Ok((amt, src)) => {
+                    if first_packet {
+                        println!("Received FIRST packet from {}! Connection Established.", src);
+                        first_packet = false;
+                    }
+
                     let packet: Packet = match bincode::deserialize(&buf[..amt]) {
                         Ok(p) => p,
                         Err(_) => continue,

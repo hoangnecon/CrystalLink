@@ -19,8 +19,31 @@ impl ScreenCapturer {
     
     // Mock capture for compilation check (User needs to replace with real SCK impl)
     fn capture_frame(&self) -> Vec<u8> {
-        // Return random noise or static pattern for testing logic
-        vec![0u8; self.width * self.height * 4]
+        // Generate a moving test pattern (Scrolling Bar)
+        let mut buffer = vec![0u8; self.width * self.height * 4];
+        let timestamp = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_millis();
+        let offset = (timestamp / 10) as usize % self.width;
+
+        // Simple loop to create a visual pattern
+        for y in 0..self.height {
+            for x in 0..self.width {
+                let idx = (y * self.width + x) * 4;
+                // Bar moves left to right
+                if x >= offset && x < offset + 50 {
+                     buffer[idx] = 255;   // R
+                     buffer[idx+1] = 0;   // G
+                     buffer[idx+2] = 0;   // B
+                     buffer[idx+3] = 255; // A
+                } else {
+                     // Static gray background checking diffs
+                     buffer[idx] = (x % 255) as u8;
+                     buffer[idx+1] = (y % 255) as u8;
+                     buffer[idx+2] = 100;
+                     buffer[idx+3] = 255;
+                }
+            }
+        }
+        buffer
     }
 }
 
