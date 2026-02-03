@@ -1,0 +1,12 @@
+[package]
+name = "crystallink-receiver"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+crystallink-protocol = { path = "../common" }
+minifb = "0.24" # Easy windowing & buffer drawing
+tokio = { version = "1", features = ["full"] }
+serde = "1.0"
+bincode = "1.3"
+lz4_flex = "0.11"
